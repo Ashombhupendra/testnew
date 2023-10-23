@@ -1,0 +1,23 @@
+InAppWebView(
+                                                              initialUrlRequest:
+                                                                  URLRequest(
+                                                                      url: Uri.parse(
+                                                                          "https://google.com/")),
+                                                              initialOptions:
+                                                                  InAppWebViewGroupOptions(
+                                                                      crossPlatform:
+                                                                          InAppWebViewOptions(
+                                                                javaScriptEnabled:
+                                                                    true,
+                                                                            clearCache: true,
+                                                                            verticalScrollBarEnabled: true,
+                                                                            supportZoom: false,
+
+                                                              )),
+                                                              onWebViewCreated:
+                                                                  (InAppWebViewController
+                                                                      controller) {
+                                                                _webViewController =
+                                                                    controller;
+                                                              },
+                                                            )

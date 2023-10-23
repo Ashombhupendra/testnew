@@ -1,0 +1,583 @@
+import 'dart:convert';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bounceable/flutter_bounceable.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import '../Utils/Mystyle.dart';
+import 'package:http/http.dart' as http;
+import 'package:get/get.dart';
+
+class Subcategories extends StatefulWidget {
+  var id = "";
+
+  Subcategories(String _id) {
+    this.id = _id;
+  }
+
+  @override
+  State<Subcategories> createState() => _SubcategoriesState(id);
+}
+
+class _SubcategoriesState extends State<Subcategories> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  var _id = "";
+  var load_status = false;
+
+  late Map Sub_map;
+  var status = false;
+  var my_data = [];
+
+  var Sub_app_map = [];
+  var sub_status = false;
+  var my_sub_data = [];
+
+  var serResList = [];
+
+  var sub_id = "";
+  var min_price = "";
+  var max_price = "";
+
+  var end_point = "categoryproduct";
+  var filter_end_point = "subcategory_product";
+
+  var filter_status = 0;
+  late Map cate_map;
+
+  RangeValues _currentRangeValues = RangeValues(40, 80);
+
+  List<String>? images = [];
+
+  List<dynamic> subcategories = [];
+  List<String> sub_cate_id = [];
+
+  _SubcategoriesState(String id) {
+    this._id = id;
+  }
+
+  var chkBoxindex = 0;
+
+  Map student = {};
+  Map bike = {};
+  Map<int, bool> sub_cat_cb = {};
+
+  var sub_cat_cb_status = true;
+
+  var bike_brand_data = [
+    "Moriwaki",
+    "Yamaha",
+    "Kawasaki",
+    "TVSMotor",
+    "Ola Electric",
+    "Yezdi",
+    "Mahindra Two Wheelers",
+    "Hero Motocorp",
+    "BMW",
+    "TVS",
+    "KTM",
+    "Piaggio",
+    "Royal Enfield",
+    "Suzuki",
+    "Ather Energy",
+    "Bajaj Auto",
+    "Hero Moto Corp",
+    "Hero",
+    "HarleyDavidson",
+    "Honda"
+  ];
+
+  var car_brand_data = [
+    "BMW",
+    "Tata",
+    "Mahindra",
+    "Audi",
+    "Suzuki",
+    "Honda",
+    "Maruti",
+    ""
+  ];
+
+  //all sub cate data
+//https://dbvertex.com/classified/api/Webservice/subcategory_product/5/37
+
+  getAllSubcategoriesData(
+      String min_pr, String mx_price, String sub_cat_id, String? brand) async {
+    EasyLoading.show(status: "Loading...");
+    // Fluttertoast.showToast(
+    //     msg: "main fun min:${min_pr}  max:${mx_price}  subid:${sub_cat_id}");
+    http.Response res;
+    res = await http.post(
+        Uri.parse("https://work.dbvertex.com/classified/api/Webservice/filter"),
+        headers: <String, String>{
+          "x-api-key": "pahadiuncle@123"
+        },
+        body: <String, String>{
+          "category": "${_id}",
+          "subcategory": sub_cat_id,
+          "min_price": min_pr,
+          "mix_price": mx_price,
+          "brand": brand!!
+        });
+
+    if (res.statusCode == 200) {
+      EasyLoading.dismiss();
+      print(
+          "filterdata id:${_id}  sub_id${sub_cat_id}  min${min_pr} max${mx_price} ");
+      //  Sub_app_map.clear();
+      //Sub_app_map = jsonDecode(res.body);
+      // my_sub_data.clear();
+      setState(() {
+        my_sub_data = jsonDecode(res.body);
+        serResList = my_sub_data;
+      });
+
+      //my_sub_data = Sub_app_map;
+
+      setState(() {
+        load_status = true;
+      });
+    } else {
+      EasyLoading.dismiss();
+      Fluttertoast.showToast(msg: "response failed");
+    }
+  }
+
+  getCategories() async {
+    http.Response res;
+    res = await http.get(
+        Uri.parse("https://work.dbvertex.com/classified/api/Webservice/category"),
+        headers: <String, String>{"x-api-key": "pahadiuncle@123"});
+
+    if (res.statusCode == 200) {
+      setState(() {
+        cate_map = jsonDecode(res.body);
+      });
+    }
+  }
+
+  //chip
+  getSubcategories() async {
+    http.Response res;
+    res = await http.get(
+        Uri.parse(
+            "https://work.dbvertex.com/classified/api/Webservice/subcategory/$_id"),
+        headers: <String, String>{"x-api-key": "pahadiuncle@123"});
+
+    if (res.statusCode == 200) {
+      Sub_map = jsonDecode(res.body);
+
+      status = Sub_map['status'];
+      if (status == true) {
+        my_data = Sub_map['body'];
+        if (my_data.isNotEmpty) {
+          for (int i = 0; i < my_data.length; i++) {
+            student.addAll({i: false});
+            subcategories.add(my_data[i]['sub_category'].toString()); //names
+            // subcategories.add(my_data[i]['sub_id'].toString());
+            sub_cate_id.add(my_data[i]['sub_id'].toString()); //ids
+          }
+        }
+        setState(() {
+          load_status = true;
+        });
+      } else {
+        Fluttertoast.showToast(msg: "false");
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Something went wrong")));
+      }
+    } else {
+      Fluttertoast.showToast(msg: "resposne failed");
+    }
+  }
+
+  getFilterdata(
+      String _min_price, String _max_price, String sub_c_id, String? brand) {
+    // Fluttertoast.showToast(
+    //     msg: "min:${_min_price}  max:${_max_price}  subid:${sub_c_id}");
+    getAllSubcategoriesData(_min_price, _max_price, sub_c_id, brand);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getSubcategories();
+    getAllSubcategoriesData("", "", "", "");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      appBar: AppBar(title: Text("Subcategories"), actions: [
+        Container(),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: InkWell(
+              onTap: () => _scaffoldKey.currentState?.openDrawer(),
+              child: Icon(Icons.filter_alt_sharp)),
+        ),
+      ]),
+      drawer: Drawer(
+        // Add a ListView to the drawer. This ensures the user can scroll
+        // through the options in the drawer if there isn't enough vertical
+        // space to fit everything.
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 20,
+              ),
+              Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Text(
+                      "Filters",
+                      style: login_head,
+                    ),
+                  )),
+              Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Text(
+                      "Subcategories",
+                      style: login_head,
+                    ),
+                  )),
+              Expanded(
+                  flex: 2,
+                  child: ListView.builder(
+                    itemBuilder: (c, i) {
+                      return ListTile(
+                        leading: InkWell(
+                            onTap: () {
+                              setState(() {
+                                showSuccAlert("alert", "clicked");
+                              });
+                            },
+                            child: Visibility(
+                              visible: true,
+                              child: Checkbox(
+                                  onChanged: (value) {
+                                    // setState(() {
+                                    //   student[i] = value!;
+                                    //   Fluttertoast.showToast(
+                                    //       msg: "subid:" +
+                                    //           sub_cate_id[i].toString());
+                                    //
+                                    //   Fluttertoast.showToast(
+                                    //       msg: value.toString());
+                                    //
+                                    //   // if (student[i] == true) {
+                                    //   //   getFilterdata(
+                                    //   //       "", "", sub_cate_id[i].toString());
+                                    //   // }
+                                    // });
+
+                                  },
+                                  value: student[i]),
+                            )),
+                        title: InkWell(
+                            onTap: () {
+                              setState(() {
+                                getFilterdata(
+                                    "", "", sub_cate_id[i].toString(), "");
+                              });
+                            },
+                            child: Text(subcategories[i].toString())),
+                      );
+                    },
+                    itemCount: subcategories.length,
+                  )),
+              Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: Visibility(
+                        visible: _id == "5" || _id == "6" ? true : false,
+                        child: Text(
+                          "Brand",
+                          style: login_head,
+                        )),
+                  )),
+              Visibility(
+                visible: _id == "5" || _id == "6" ? true : false,
+                child: Expanded(
+                    flex: 2,
+                    child: ListView.builder(
+                      itemBuilder: (c, i) {
+                        return ListTile(
+                            leading: Text(i.toString()),
+                            title: _id == "5"
+                                ? Bounceable(
+                                    onTap: () {
+                                      setState(() {
+                                        serResList = my_sub_data;
+                                      });
+                                      setState(() {
+                                        serResList = my_sub_data
+                                            .where((element) =>
+                                                element['Brand']
+                                                    .toString()
+                                                    .trim()
+                                                    .toLowerCase() ==
+                                                bike_brand_data[i]
+                                                    .toString()
+                                                    .trim()
+                                                    .toLowerCase())
+                                            .toList();
+                                      });
+                                    },
+                                    child: Text(bike_brand_data[i].toString()))
+                                : Bounceable(
+                                    onTap: () {
+                                      setState(() {
+                                        //query.name == null || query.name.contains(product.name)
+                                        serResList = my_sub_data
+                                            .where((element) =>
+                                                element['Brand'].toString() ==
+                                                    null ||
+                                                element['Brand']
+                                                    .toString()
+                                                    .trim()
+                                                    .toLowerCase()
+                                                    .contains(car_brand_data[i]
+                                                        .toString()
+                                                        .trim()
+                                                        .toLowerCase()))
+                                            .toList();
+                                      });
+                                    },
+                                    child: Text(car_brand_data[i].toString())));
+                      },
+                      itemCount: _id == "5"
+                          ? bike_brand_data.length
+                          : car_brand_data.length,
+                    )),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10.0, top: 10.0),
+                          child: Text(
+                            "Price",
+                            style: login_head,
+                          ),
+                        )),
+                    StatefulBuilder(
+                      builder: (BuildContext context,
+                          void Function(void Function()) setState) {
+                        return RangeSlider(
+                          values: _currentRangeValues,
+                          max: 1000000,
+                          min: 0,
+                          divisions: 1000,
+                          labels: RangeLabels(
+                            _currentRangeValues.start.round().toString(),
+                            _currentRangeValues.end.round().toString(),
+                          ),
+                          onChanged: (RangeValues values) {
+                            setState(() {
+                              _currentRangeValues = values;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                    child: MaterialButton(
+                  onPressed: () {
+                    setState(() {
+                      serResList = my_sub_data
+                          .where((i) =>
+                              int.tryParse(i['Price'])!.toInt() >=
+                                  _currentRangeValues.start.toInt() &&
+                              int.tryParse(i['Price'])!.toInt() <=
+                                  _currentRangeValues.end.toInt())
+                          .toList();
+                    });
+                    // showSuccAlert("title", serResList.toString());
+                    _scaffoldKey.currentState?.closeDrawer();
+                  },
+                  child: Text("Search"),
+                  color: Colors.green,
+                )),
+              )
+            ],
+          ),
+        ),
+      ),
+      body: SafeArea(
+          child: load_status == false
+              ? Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        itemBuilder: (c, i) {
+                          return my_sub_data.isEmpty
+                              ? CircularProgressIndicator()
+
+                              // my_sub_data[i]['user_id'] ?? "null",
+                              // my_sub_data[i]['id'] ?? "null",
+                              // my_sub_data[i]['category_id'] ?? "null",
+                              // my_sub_data[i]['title'] ?? "null",
+                              // my_sub_data[i]['Description'] ?? "null",
+                              // my_sub_data[i]['Condition_product'] ?? "null",
+                              // my_sub_data[i]['Make'] ?? "null",
+                              // my_sub_data[i]['Address'] ?? "null",
+                              // my_sub_data[i]['Price'] ?? "null",
+                              // my_sub_data[i]['thumbnails'] ?? "null",
+                              // [],
+                              // my_sub_data[i]['Model'].toString() ?? "null",
+                              // my_sub_data[i]['Location'] ?? "null",
+                              // my_sub_data[i]['For_sale_by'] ?? "null",
+                              // my_sub_data[i]['Brand'] ?? "null",
+                              // my_sub_data[i]['Model'] ?? "null",
+                              // my_sub_data[i]['kilometers'] ?? "null",
+                              // my_sub_data[i]['Count'] ?? "0",
+
+                              : GetProduct(
+                                  serResList[i]['user_id'] ?? "null",
+                                  serResList[i]['id'] ?? "null",
+                                  serResList[i]['category_id'] ?? "null",
+                                  serResList[i]['title'] ?? "null",
+                                  serResList[i]['Description'] ?? "null",
+                                  serResList[i]['Condition_product'] ?? "null",
+                                  serResList[i]['Make'] ?? "null",
+                                  serResList[i]['Address'] ?? "null",
+                                  serResList[i]['Price'] ?? "null",
+                                  serResList[i]['thumbnails'] ?? "null",
+                                  serResList[i]['images_1'] ?? "null",
+                                  serResList[i]['images_2'] ?? "null",
+                                  serResList[i]['Model'].toString() ?? "null",
+                                  serResList[i]['Location'] ?? "null",
+                                  serResList[i]['For_sale_by'] ?? "null",
+                                  serResList[i]['Brand'] ?? "null",
+                                  serResList[i]['kilometers'] ?? "null",
+                                  serResList[i]['Count'] ?? "0",
+                                );
+                        },
+                        itemCount: serResList.length,
+                        key: UniqueKey(),
+                      ),
+                    ),
+                  ],
+                )),
+    );
+  }
+}
+
+// my_sub_data[i]['user_id'] ?? "null",
+// my_sub_data[i]['id'] ?? "null",
+// my_sub_data[i]['category_id'] ?? "null",
+// my_sub_data[i]['title'] ?? "null",
+// my_sub_data[i]['Description'] ?? "null",
+// my_sub_data[i]['Condition_product'] ?? "null",
+// my_sub_data[i]['Make'] ?? "null",
+// my_sub_data[i]['Address'] ?? "null",
+// my_sub_data[i]['Price'] ?? "null",
+// my_sub_data[i]['thumbnails'] ?? "null",
+// [],
+// my_sub_data[i]['Model'].toString() ?? "null",
+// my_sub_data[i]['Location'] ?? "null",
+// my_sub_data[i]['For_sale_by'] ?? "null",
+// my_sub_data[i]['Brand'] ?? "null",
+// my_sub_data[i]['Model'] ?? "null",
+// my_sub_data[i]['kilometers'] ?? "null",
+// my_sub_data[i]['Count'] ?? "0",
+
+class Product_data {
+  String receiver_id;
+  String pro_id;
+  String cat_id;
+
+  String title;
+  String Description;
+  String Condition_product;
+  String Make;
+  String Address;
+  String Price;
+  String thumbnails;
+
+  List<String>? images;
+  String model;
+  String location;
+
+  String For_sale_by;
+  String Brand;
+  String Model;
+  String kilometers;
+  String count;
+
+  Product_data(
+      this.receiver_id,
+      this.pro_id,
+      this.cat_id,
+      this.title,
+      this.Description,
+      this.Condition_product,
+      this.Make,
+      this.Address,
+      this.Price,
+      this.thumbnails,
+      this.images,
+      this.model,
+      this.location,
+      this.For_sale_by,
+      this.Brand,
+      this.Model,
+      this.kilometers,
+      this.count);
+}
+
+class Product {
+  final String name;
+  final String location;
+  final String price;
+
+  Product(this.name, this.location, this.price);
+
+  @override
+  String toString() {
+    return '$name $name $location $price';
+  }
+}
+
+class Query {
+  final String name;
+  final String price;
+  final String location;
+
+  Query(this.name, this.price, this.location);
+}
+
+List<Product> filter(List<Product> products, Query query) {
+  return products
+      .where((product) =>
+          (query.name == null || query.name.contains(product.name)) &&
+          (query.location == null ||
+              query.location.contains(product.location)) &&
+          (query.price == null || query.price.contains(product.price)))
+      .toList();
+}
+
+Query _query = Query("", "", "");
+List<Product> _productList = [
+  Product("P1", "indore1", "100"),
+  Product("P2", "indore2", "101"),
+  Product("P3", "indore3", "102"),
+];
+//List<Product> results = filter(_productList, _query)

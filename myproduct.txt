@@ -1,0 +1,342 @@
+import 'dart:convert';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:justquicksell/src/Utils/Utill.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
+import 'package:get/get.dart';
+import '../Dashboard/ProductDetails/ProductDetails.dart';
+
+import '../Utils/Mystyle.dart';
+import '../Utils/string_extension.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+
+
+class MyProducts extends StatefulWidget {
+  const MyProducts({Key? key}) : super(key: key);
+
+  @override
+  State<MyProducts> createState() => _MyProductsState();
+}
+
+class _MyProductsState extends State<MyProducts> {
+  var load_status = false;
+
+  var Sub_app_map = [];
+  var sub_status = false;
+  late Map res_data;
+  var my_sub_data = [];
+
+  List<String>? images = [];
+
+
+  var Loading_status = false;
+
+  var user_data = [];
+  var user_id = "";
+  RefreshController _refreshController =
+  RefreshController(initialRefresh: false);
+
+
+  void getUserData(key) async {
+    final sp = await SharedPreferences.getInstance();
+    setState(() {
+      user_data = sp.getStringList(key)!;
+      user_id = user_data[0].toString();
+      //Fluttertoast.showToast(msg: "userid"+user_id.toString());
+      load_status = true;
+      getMyproducts();
+    });
+  }
+
+  void _onLoading() async {
+    getUserData("user_data");
+    _refreshController.loadComplete();
+  }
+
+
+  void _onRefresh() async {
+    getUserData("user_data");
+    _refreshController.refreshCompleted();
+  }
+
+
+  getMyproducts() async {
+    EasyLoading.show(status: "Loading..");
+    http.Response res;
+    res = await http.get(
+      Uri.parse("https://work.dbvertex.com/classified/api/webservice/myproduct/$user_id"),
+      headers: <String, String>{"x-api-key": "pahadiuncle@123"},
+    );
+
+    if (res.statusCode == 200) {
+      EasyLoading.dismiss();
+      setState(() {
+        res_data = jsonDecode(res.body);
+        if (res_data['status'] == true) {
+          my_sub_data = res_data['body'];
+          load_status = true;
+        } else {
+          Fluttertoast.showToast(msg: "Status failed");
+        }
+      });
+    } else {
+      EasyLoading.dismiss();
+      Fluttertoast.showToast(msg: "response failed");
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUserData("user_data");
+
+  }
+
+  String showModel(int i) {
+    if(my_sub_data[i]['Model'].toString().isNotEmpty) {
+      Get.snackbar("outputt", my_sub_data[i]['Model'].toString());
+      return my_sub_data[i]['Model'].toString();
+
+
+    }else if(my_sub_data[i]['Brand'].toString().isNotEmpty){
+      Get.snackbar("outputt", my_sub_data[i]['Brand'].toString());
+      return my_sub_data[i]['Brand'].toString();
+
+    }else{
+      Get.snackbar("outputt", "null");
+      return "";
+
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text("My Products"),
+        ),
+        body: load_status == false
+            ? Center(child: CircularProgressIndicator())
+            :    SmartRefresher(
+          controller: _refreshController,
+          onLoading: _onLoading,
+          onRefresh: _onRefresh,
+              child: ListView.builder(itemBuilder: (c, i) {
+                  return Expanded(
+                    child: Card(
+                      elevation: 10,
+                      child: Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Container(
+                          width: double.infinity,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 150,
+                                      height: 200,
+                                      color: Colors.grey,
+                                      child: Image.network(
+                                        "https://work.dbvertex.com/" +
+                                            my_sub_data[i]['thumbnails']
+                                                .toString()
+                                                .substring(1),
+                                        fit: BoxFit.fill,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Container(
+                                        width: 300,
+                                        height: 200,
+                                        color: Colors.transparent,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Text(
+                                                my_sub_data[i]['title'].toString().capitalizeFirst??"null",
+                                                style: login_head_bold,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Flexible(
+                                                child: Text(
+                                                  my_sub_data[i]['Description'].toString().capitalizeFirst??"null",
+                                                  style: TextStyle(
+                                                      overflow:
+                                                          TextOverflow.ellipsis),
+                                                  softWrap: true,
+                                                ),
+                                              ),
+                                            ),
+                                            Flexible(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.spaceAround,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(8.0),
+                                                    child: Text("Condition"),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(8.0),
+                                                    child: Text(my_sub_data[i]
+                                                        ['Condition_product'].toString().capitalizeFirst??"null"),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Flexible(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.spaceAround,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(8.0),
+                                                    child: Text("Model"),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(8.0),
+                                                    child: showModel(i).isEmpty?Text("no data"):Text(showModel(i))
+
+
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Flexible(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.spaceAround,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Align(
+                                                    alignment: Alignment.topLeft,
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(8.0),
+                                                      child: Icon(
+                                                        Icons.location_on,
+                                                        color: Colors.green,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(8.0),
+                                                    child: Text(
+                                                      my_sub_data[i]['Address'].toString().capitalizeFirst??"null",
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ), //String title;
+                              //   String price;
+                              // String thumbnail;
+                              // List<String> images;
+                              //   String dis;
+                              //   String condition;
+                              //   String city;
+                              //   String model;
+                              // String location;
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => ProductDetails(
+                                                my_sub_data[i]['user_id'] ?? "0",
+                                                my_sub_data[i]['id'] ?? "0",
+                                                my_sub_data[i]['category_id'] ?? "0",
+                                                my_sub_data[i]['title']?? "0",
+                                                my_sub_data[i]['Price'] ?? "0",
+                                                my_sub_data[i]['thumbnails'] ?? "0",
+                                                [] ?? ["0", "1", "2"],
+                                                my_sub_data[i]['Description'] ?? "0",
+                                                my_sub_data[i]['Condition_product'] ?? "0",
+                                                my_sub_data[i]['Address'] ?? "0",
+                                                my_sub_data[i]['Model'] ?? "0",
+                                                my_sub_data[i]['Location'] ?? "0",
+                                                my_sub_data[i]['Location']??"0",
+
+                                              )));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                        alignment: Alignment.center,
+                                        width: 100,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(20),
+                                            color: Colors.green,
+                                            border: Border.all(
+                                                color: Colors.lightGreen,
+                                                width: 1)),
+                                        child: Text(
+                                          "Ads Details",
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    "\$${my_sub_data[i]['Price']},",
+                                    style: TextStyle(
+                                        color: Colors.green, fontSize: 20),
+                                  ),
+                                  Visibility(visible: false,
+                                    child: InkWell(
+                                        onTap: () {
+                                          Fluttertoast.showToast(msg: "called");
+                                        },
+                                        child: Icon(Icons.heart_broken)),
+                                  )
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },itemCount: my_sub_data.length,),
+            ));
+  }
+}

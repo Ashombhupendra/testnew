@@ -1,0 +1,2 @@
+razor pay key->'rzp_test_OZvR9TOLskL9HF
+razor pay key old ->'rzp_test_LAgrrLvZmPZQ6ho

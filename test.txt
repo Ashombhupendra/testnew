@@ -1,0 +1,22 @@
+1)Flutter notification
+
+
+
+a) Build a class name as you wish,exFirebaseApi.
+b) FirebaseMessaging.instance;
+c) Build instance of AndroidNotificationChannel and pass 4 perameters.
+d) Make instance of FlutterLocalNotificationsPlugin;
+e) Run before main fun   await FirebaseApi().initFirebase();
+f) Create async function initFirebase() and user
+   a) await _firebaseMessaging.requestPermission();
+   b) final fcmToken = await _firebaseMessaging.getToken();
+   c) initPushNotification();
+   d) initLocalNotifications();
+
+
+g) inside initPushNotification
+  a)  FirebaseMessaging.instance.setForegroundNotificationPresentationOptions
+   b) FirebaseMessaging.instance.getInitialMessage().then(_handleMessage);
+ c)FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+   d)  FirebaseMessaging.onBackgroundMessage(handleBackgroundMessage);
+

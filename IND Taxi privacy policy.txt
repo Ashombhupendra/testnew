@@ -1,0 +1,62 @@
+Privacy Policy 
+IND Taxi App
+
+This Privacy Policy explains how IND Taxi ("we," "us," or "our") collects, uses, and safeguards the personal information of users ("you" or "your") of the IND Taxi mobile application ("App"). We are committed to protecting your privacy and ensuring the security of your personal information. By using the IND Taxi App, you consent to the practices described in this Privacy Policy.
+
+1. Information We Collect:
+
+a. Personal Information:
+   - When you register an account on the IND Taxi App, we collect your name, email address, phone number, and profile picture.
+   - If you are a taxi driver, we may also collect your driver's license information, vehicle details, and related documentation.
+
+b.  Location Information: 
+   - The App requires access to your device's location to provide taxi services. We collect your precise location information when you request or provide taxi services through the App.
+
+c.  Usage and Analytics Information: 
+   - We collect information about how you interact with the App, including pages visited, features used, and actions taken. This helps us improve the App's functionality and user experience.
+
+ 2. How We Use Your Information: 
+
+a.  Service Provision: 
+   - We use your personal and location information to connect passengers with available taxi drivers and facilitate taxi bookings and rides.
+
+b.  Communication: 
+   - We use your contact information to send you notifications, updates, and alerts related to your use of the App, including booking confirmations and driver details.
+
+c.  Improvement and Customization: 
+   - We analyze usage patterns and feedback to enhance the App's features, user interface, and overall experience.
+
+ 3. Sharing of Information: 
+
+a.  With Taxi Drivers: 
+   - As a passenger, your name, profile picture, and location information will be shared with the selected taxi driver for the purpose of providing the requested service.
+
+b.  Legal Compliance: 
+   - We may disclose your information to comply with applicable laws, regulations, or legal requests.
+
+ 4. Data Security: 
+
+a.  Security Measures: 
+   - We implement industry-standard security measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction.
+
+ 5. Your Choices: 
+
+a.  Account Information: 
+   - You can review and update your account information within the App's settings.
+
+b.  Location Services: 
+   - You can control the App's access to your device's location through your device settings.
+
+ 6. Children's Privacy: 
+
+   - The App is not intended for use by children under the age of 13. We do not knowingly collect personal information from children under 13.
+
+ 7. Changes to Privacy Policy: 
+
+   - We may update this Privacy Policy from time to time. We will notify you of any significant changes via email or within the App.
+
+ 8. Contact Us: 
+
+   - If you have any questions or concerns regarding this Privacy Policy, please contact us at info@dbvertex.com.
+
+By using the IND Taxi App, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.

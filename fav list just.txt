@@ -1,0 +1,465 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:justquicksell/src/Utils/Utill.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get/get.dart';
+import '../Utils/string_extension.dart';
+import '../Utils/Utill.dart';
+import '../Dashboard/ProductDetails/ProductDetails.dart';
+import '../Utils/Mystyle.dart';
+
+class FavoriteList extends StatefulWidget {
+  const FavoriteList({Key? key}) : super(key: key);
+
+  @override
+  State<FavoriteList> createState() => _FavoriteListState();
+}
+
+class _FavoriteListState extends State<FavoriteList> {
+  var load_status = false;
+
+  var Sub_app_map = [];
+  var sub_status = false;
+  late Map res_data;
+  var my_sub_data = [];
+  var searchList = [];
+
+  List<String>? images = [];
+
+  var Loading_status = false;
+
+  var user_data = [];
+  var user_id = "";
+
+  var searchController = TextEditingController();
+
+  var modelVisibility = true;
+  RangeValues _currentRangeValues = RangeValues(40, 80);
+
+  getMyproducts() async {
+    EasyLoading.show(status: "Loading..");
+    http.Response res;
+    res = await http.get(
+      Uri.parse(
+          "https://work.dbvertex.com/classified/api/webservice/userwishlist/$user_id"),
+      headers: <String, String>{"x-api-key": "pahadiuncle@123"},
+    );
+
+    if (res.statusCode == 200) {
+      //Fluttertoast.showToast(msg: "Status 200");
+      EasyLoading.dismiss();
+      setState(() {
+        //res_data
+        my_sub_data = jsonDecode(res.body);
+        searchList = my_sub_data;
+        if (my_sub_data.isEmpty || my_sub_data.toString() == "[]") {
+          print("favdata" + "no data");
+        }
+
+        // my_sub_data = res_data['body'];
+        load_status = true;
+      });
+    } else {
+      EasyLoading.dismiss();
+      Fluttertoast.showToast(msg: "response failed");
+    }
+  }
+
+  StrCapitalize(String str) {
+    if (str != null) {
+      return str[0].toUpperCase() + str.substring(1);
+    }
+  }
+
+  void getUserData(key) async {
+    final sp = await SharedPreferences.getInstance();
+    setState(() {
+      user_data = sp.getStringList(key)!;
+      user_id = user_data[0].toString();
+      // Fluttertoast.showToast(msg: "userid"+user_id.toString());
+      load_status = true;
+      getMyproducts();
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getUserData("user_data");
+  }
+
+  showModel(int i) {
+    if (my_sub_data[i]['Model'].toString().isNotEmpty) {
+      return my_sub_data[i]['Model'].toString();
+    }
+    if (my_sub_data[i]['Brand'].toString().isNotEmpty) {
+      return my_sub_data[i]['Brand'].toString();
+    }
+    setState(() {
+      modelVisibility = false;
+    });
+    return "";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text("My Favorites Products"),
+          actions: [
+            InkWell(
+                onTap: () {
+                  Get.defaultDialog(
+                      title: "Search",
+                      content: Column(
+                        children: [
+                          Text("By price"),
+                          Visibility(
+                            visible: false,
+                            child: Center(
+                              child: TextField(
+                                controller: searchController,
+                                decoration: InputDecoration(hintText: "serach"),
+                              ),
+                            ),
+                          ),
+                          StatefulBuilder(
+                            builder: (BuildContext context,
+                                void Function(void Function()) setState) {
+                              return RangeSlider(
+                                values: _currentRangeValues,
+                                max: 100000,
+                                min: 0,
+                                divisions: 100,
+                                labels: RangeLabels(
+                                  _currentRangeValues.start.round().toString(),
+                                  _currentRangeValues.end.round().toString(),
+                                ),
+                                onChanged: (RangeValues values) {
+                                  setState(() {
+                                    _currentRangeValues = values;
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                          MaterialButton(
+                            onPressed: () {
+                              setState(() {
+                                searchList = my_sub_data
+                                    .where((i) =>
+                                        int.tryParse(i['Price'])!.toInt() >=
+                                            _currentRangeValues.start.toInt() &&
+                                        int.tryParse(i['Price'])!.toInt() <=
+                                            _currentRangeValues.end.toInt())
+                                    .toList();
+                              });
+                              Get.back();
+
+                              //showFailAlert("title", searchList.toString());
+                              // showSuccAlert(
+                              //   "title",
+                              //   _currentRangeValues.start.toInt().toString() +
+                              //       _currentRangeValues.end
+                              //           .toInt()
+                              //           .toString(),
+                              // );
+                            },
+                            child: Text("Search"),
+                            color: Colors.green,
+                          )
+                        ],
+                      ));
+                },
+                child: Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(
+                      Icons.filter_alt_sharp,
+                    )))
+          ],
+        ),
+        body: load_status == false
+            ? Center(child: CircularProgressIndicator())
+            : ListView.builder(
+                itemBuilder: (c, i) {
+                  return Column(
+                    children: [
+                      Card(
+                        elevation: 10,
+                        child: Padding(
+                          padding: const EdgeInsets.all(2.0),
+                          child: Container(
+                            width: double.infinity,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Center(
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 150,
+                                        height: 200,
+                                        color: Colors.grey,
+                                        child: Image.network(
+                                          "https://work.dbvertex.com/" +
+                                              searchList[i]['thumbnails']
+                                                  .toString()
+                                                  .substring(1),
+                                          fit: BoxFit.fill,
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: Container(
+                                          width: 300,
+                                          height: 200,
+                                          color: Colors.transparent,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  StrCapitalize(searchList[i]
+                                                          ['title']
+                                                      .toString()),
+                                                  style: login_head_bold,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Flexible(
+                                                  child: Text(
+                                                    searchList[i]['Description']
+                                                            .toString()
+                                                            .capitalizeFirst ??
+                                                        "null",
+                                                    style: TextStyle(
+                                                        overflow: TextOverflow
+                                                            .ellipsis),
+                                                    softWrap: true,
+                                                  ),
+                                                ),
+                                              ),
+                                              Flexible(
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceAround,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text("Condition"),
+                                                    ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(searchList[i][
+                                                              'Condition_product'] ??
+                                                          "null"),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Flexible(
+                                                child: Visibility(
+                                                  visible: modelVisibility,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceAround,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8.0),
+                                                        child: Text("Model"),
+                                                      ),
+                                                      Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8.0),
+                                                          child: showModel(i)
+                                                                  .toString()
+                                                                  .isEmpty
+                                                              ? Text("no data")
+                                                              : Text(showModel(
+                                                                  i))),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              Flexible(
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceAround,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Align(
+                                                      alignment:
+                                                          Alignment.topLeft,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8.0),
+                                                        child: Icon(
+                                                          Icons.location_on,
+                                                          color: Colors.green,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        searchList[i]['Address']
+                                                                .toString()
+                                                                .capitalizeFirst ??
+                                                            "null",
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ), //String title;
+                                //   String price;
+                                // String thumbnail;
+                                // List<String> images;
+                                //   String dis;
+                                //   String condition;
+                                //   String city;
+                                //   String model;
+                                // String location;
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProductDetails(
+                                                      searchList[i]
+                                                              ['user_id'] ??
+                                                          "0",
+                                                      searchList[i]['id'] ??
+                                                          "0",
+                                                      searchList[i]
+                                                              ['category_id'] ??
+                                                          "0",
+                                                      searchList[i]['title'] ??
+                                                          "0",
+                                                      searchList[i]['Price'] ??
+                                                          "0",
+                                                      searchList[i]
+                                                              ['thumbnails'] ??
+                                                          "0",
+                                                      [
+                                                        searchList[i]["images_1"].toString()??"null",
+                                                        searchList[i]["images_2"].toString()??"null",
+                                                        searchList[i]["images_3"].toString()??"null",
+                                                        searchList[i]["images_4"].toString()??"null",
+                                                        searchList[i]["images_5"].toString()??"null",
+
+                                                      ] ?? ["0", "1", "2"],
+                                                      searchList[i]
+                                                              ['Description'] ??
+                                                          "0",
+                                                      searchList[i][
+                                                              'Condition_product'] ??
+                                                          "0",
+                                                      searchList[i]
+                                                              ['Address'] ??
+                                                          "0",
+                                                      searchList[i]['Model'] ??
+                                                          "0",
+                                                      searchList[i]
+                                                              ['Location'] ??
+                                                          "0",
+                                                      searchList[i]
+                                                              ['Location'] ??
+                                                          "0",
+                                                    )));
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Container(
+                                          alignment: Alignment.center,
+                                          width: 100,
+                                          height: 50,
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              color: Colors.green,
+                                              border: Border.all(
+                                                  color: Colors.lightGreen,
+                                                  width: 1)),
+                                          child: Text(
+                                            "Ads Details",
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      "\$${searchList[i]['Price'] ?? "null"},",
+                                      style: TextStyle(
+                                          color: Colors.green, fontSize: 20),
+                                    ),
+                                    Visibility(
+                                      visible: false,
+                                      child: InkWell(
+                                          onTap: () {
+                                            Fluttertoast.showToast(
+                                                msg: "called");
+                                          },
+                                          child: Icon(Icons.favorite_border)),
+                                    )
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                itemCount: searchList.length,
+              ));
+  }
+}
